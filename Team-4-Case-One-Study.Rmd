@@ -7,6 +7,54 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Setup
+```{r}
+# Setup file locations to import 
+beer_csv_loc <- "./StartingDBs/Beers.csv"
+breweries_csv_loc <- "./StartingDBs/Breweries.csv"
 
-T
+# Read in data 
+beer_data <- read.csv(beer_csv_loc, header = TRUE)
+brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
+```
+
+# Case study Questions 
+
+## How many breweries are present in each state?
+```{r}
+# Create a seperate data frame to store state data 
+### Note: This data set counts the district of columbia as a state
+num_of_breweries_by_state <- data.frame(table(brewery_data$State))
+```
+
+## Merge beer data with the breweries data. Print the first 6 observations and 
+## the last six observations to check the merged file
+```{r}
+# Change column name of beer_data to match brewery_data to use as a primary key
+colnames(beer_data)[5] <- "Brew_ID"
+
+# Merge two data bases using merge
+full_brew_data <- merge(brewery_data, beer_data, by="Brew_ID")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
