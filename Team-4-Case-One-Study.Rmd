@@ -7,6 +7,29 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+##Libs
+```{r}
+library(stringr)
+library(xml2)
+library(tidyverse)
+library(GGally)
+library(plotly)
+library(httr)
+library(jsonlite)
+library(ggplot2)
+library(plyr) # Load first before dplyer 
+library(dplyr)
+library(tidyr)
+library(maps)
+library(mapproj)
+library(ggalt)
+library(class)
+library(caret)
+library(e1071)
+library(tm)
+library(mvtnorm)
+```
+
 ## Setup
 ```{r}
 # Setup file locations to import 
@@ -20,14 +43,14 @@ brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
 
 # Case study Questions 
 
-## How many breweries are present in each state?
+## 1. How many breweries are present in each state?
 ```{r}
 # Create a seperate data frame to store state data 
 ### Note: This data set counts the district of columbia as a state
 num_of_breweries_by_state <- data.frame(table(brewery_data$State))
 ```
 
-## Merge beer data with the breweries data. Print the first 6 observations and 
+## 2. Merge beer data with the breweries data. Print the first 6 observations and 
 ## the last six observations to check the merged file
 ```{r}
 # Change column name of beer_data to match brewery_data to use as a primary key
@@ -35,9 +58,71 @@ colnames(beer_data)[5] <- "Brew_ID"
 
 # Merge two data bases using merge
 full_brew_data <- merge(brewery_data, beer_data, by="Brew_ID")
+
+# Rename columns 2 and 5 that were changed during the merge
+colnames(full_brew_data)[2] <- "Brewery"
+colnames(full_brew_data)[5] <- "Beer_Name"
+
+# Print first 6 and last 6 observations 
+head(full_brew_data, n=6)
+tail(full_brew_data, n=6)
 ```
 
+## 3. Address any <NA> values
+```{r}
+# Create two new tables where one has only ABV with no <NA>'s and the other 
+# only IBU's and no <NA>'s 
+state_abv <- data.frame(State=full_brew_data$State, ABV=full_brew_data$ABV)
+state_abv <- state_abv %>% drop_na(ABV)
 
+# Do the same for IBU 
+state_ibu <- data.frame(State=full_brew_data$State, IBU=full_brew_data$IBU)
+state_ibu <- state_ibu %>% drop_na(IBU)
+```
+
+## 4. Compute the median alcohol content and international bitterness unit for each
+## state. Plot a bar chart 
+```{r}
+# Find the average ABV for the state_abv table 
+avg_state_abv <- ddply(state_abv, .(State), function(x) mean(x$ABV))
+colnames(avg_state_abv)[2] <- "Average_ABV" # Rename the column
+# Drop DC. It's not a state....yet
+avg_state_abv <- avg_state_abv[-c(8),] # DC is equal to position 8 on the table 
+# Order the states by Decending ABV content 
+avg_state_abv <- avg_state_abv[order(avg_state_abv$Average_ABV, decreasing=TRUE),]
+
+# Find Average IBU
+avg_state_ibu <- ddply(state_ibu, .(State), function(x) mean(x$IBU))
+colnames(avg_state_ibu)[2] <- "Average_IBU" # Rename column
+# Order the states by IBU Decending 
+avg_state_ibu <- avg_state_ibu[order(avg_state_ibu$Average_IBU, decreasing=TRUE),]
+
+# Plot Average Alcohol by Volume per state
+ggplot(avg_state_abv, aes(x=reorder(State, desc(Average_ABV)), y=Average_ABV, fill=State)) + 
+       geom_col(show.legend = FALSE) +
+       xlab("State") + 
+       ylab("Average Alcohol by Volume")
+
+# Plot Average International Bitterness Unit per State 
+ggplot(avg_state_ibu, aes(x=reorder(State, desc(Average_IBU)), y=Average_IBU, fill=State)) + 
+       geom_col(show.legend = FALSE) +
+       xlab("State") + 
+       ylab("Average IBU")
+```
+
+## 5. Which state has the the Max ABV. Which has the 
+```{r}
+# Get the State with the highest average ABV
+state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),]
+# Get the State with the highest average IBU
+state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),]
+```
+
+## 6. Comment on the Summary stats and distribution of the ABV variable 
+```{r}
+summary(state_abv)
+ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
+```
 
 
 
