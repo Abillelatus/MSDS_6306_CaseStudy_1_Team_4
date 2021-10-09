@@ -5,17 +5,10 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-##Libs
-```{r}
 library(stringr)
-library(xml2)
 library(tidyverse)
 library(GGally)
 library(plotly)
-library(httr)
-library(jsonlite)
 library(ggplot2)
 library(plyr) # Load first before dplyer 
 library(dplyr)
@@ -50,8 +43,8 @@ brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
 num_of_breweries_by_state <- data.frame(table(brewery_data$State))
 ```
 
-## 2. Merge beer data with the breweries data. Print the first 6 observations and 
-## the last six observations to check the merged file
+## 2. Merge beer data with the breweries data. Print the first 6 observations and
+the last six observations to check the merged file
 ```{r}
 # Change column name of beer_data to match brewery_data to use as a primary key
 colnames(beer_data)[5] <- "Brew_ID"
@@ -82,7 +75,7 @@ state_ibu <- state_ibu %>% drop_na(IBU)
 
 ## 4. Compute the median alcohol content and international bitterness unit for each
 ## state. Plot a bar chart 
-```{r}
+```{r, fig.height=7, fig.width=12}
 # Find the average ABV for the state_abv table 
 avg_state_abv <- ddply(state_abv, .(State), function(x) mean(x$ABV))
 colnames(avg_state_abv)[2] <- "Average_ABV" # Rename the column
@@ -99,13 +92,13 @@ avg_state_ibu <- avg_state_ibu[order(avg_state_ibu$Average_IBU, decreasing=TRUE)
 
 # Plot Average Alcohol by Volume per state
 ggplot(avg_state_abv, aes(x=reorder(State, desc(Average_ABV)), y=Average_ABV, fill=State)) + 
-       geom_col(show.legend = FALSE) +
+       geom_col(show.legend = FALSE, width=.9, position="dodge") +
        xlab("State") + 
-       ylab("Average Alcohol by Volume")
+       ylab("Average Alcohol by Volume") 
 
 # Plot Average International Bitterness Unit per State 
 ggplot(avg_state_ibu, aes(x=reorder(State, desc(Average_IBU)), y=Average_IBU, fill=State)) + 
-       geom_col(show.legend = FALSE) +
+       geom_col(show.legend = FALSE, width=.9, position="dodge") +
        xlab("State") + 
        ylab("Average IBU")
 ```
