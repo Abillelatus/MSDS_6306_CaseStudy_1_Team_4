@@ -44,7 +44,7 @@ num_of_breweries_by_state <- data.frame(table(brewery_data$State))
 ```
 
 ## 2. Merge beer data with the breweries data. Print the first 6 observations and
-the last six observations to check the merged file
+#the last six observations to check the merged file
 ```{r}
 # Change column name of beer_data to match brewery_data to use as a primary key
 colnames(beer_data)[5] <- "Brew_ID"
@@ -64,7 +64,6 @@ tail(full_brew_data, n=6)
 ## 3. Address any <NA> values
 ```{r}
 # Create two new tables where one has only ABV with no <NA>'s and the other 
-# only IBU's and no <NA>'s 
 state_abv <- data.frame(State=full_brew_data$State, ABV=full_brew_data$ABV)
 state_abv <- state_abv %>% drop_na(ABV)
 
@@ -74,7 +73,7 @@ state_ibu <- state_ibu %>% drop_na(IBU)
 ```
 
 ## 4. Compute the median alcohol content and international bitterness unit for each
-## state. Plot a bar chart 
+##state. Plot a bar chart 
 ```{r, fig.height=7, fig.width=12}
 # Find the average ABV for the state_abv table 
 avg_state_abv <- ddply(state_abv, .(State), function(x) mean(x$ABV))
@@ -114,9 +113,29 @@ state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),]
 ## 6. Comment on the Summary stats and distribution of the ABV variable 
 ```{r}
 summary(state_abv)
-ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
+ggplot(state_abv, aes(x=ABV)) + geom_histogram() # Right Skewness
 ```
 
+##7. Is there an apparent relationship between the bitterness of the beer and its alcoholic content? 
+```{r}
+# Create a new data frame from the beer data that removes rows that have <NA> in 
+# the ABV and IBU columns
+beer_data_no_na <- beer_data
+beer_data_no_na <- beer_data_no_na %>% drop_na(ABV)
+beer_data_no_na <- beer_data_no_na %>% drop_na(IBU)
+
+# Scatter plot to show raw data 
+ggplot(beer_data_no_na, aes(x=ABV, y=IBU, colour=Style)) + 
+                        geom_point(show.legend = FALSE) + 
+                        xlab("ABV in %") + 
+                        ylab("IBU")
+
+# Plot a smooth curve to see a more "linear" pattern 
+ggplot(beer_data_no_na, aes(x=ABV, y=IBU)) + 
+                        geom_smooth() +
+                        xlab("ABV in %") + 
+                        ylab("IBU")
+```
 
 
 
