@@ -34,6 +34,7 @@ beer_data <- read.csv(beer_csv_loc, header = TRUE)
 brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
 ```
 
+
 # Case study Questions 
 
 ## 1. How many breweries are present in each state?
@@ -42,6 +43,7 @@ brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
 ### Note: This data set counts the district of columbia as a state
 num_of_breweries_by_state <- data.frame(table(brewery_data$State))
 ```
+
 
 ## 2. Merge beer data with the breweries data. Print the first 6 observations and
 #the last six observations to check the merged file
@@ -67,6 +69,7 @@ write.csv(head(full_brew_data, n=6), head_output_csv)
 write.csv(tail(full_brew_data, n=6), tail_output_csv)
 ```
 
+
 ## 3. Address any <NA> values
 ```{r}
 # Create two new tables where one has only ABV with no <NA>'s and the other 
@@ -77,6 +80,7 @@ state_abv <- state_abv %>% drop_na(ABV)
 state_ibu <- data.frame(State=full_brew_data$State, IBU=full_brew_data$IBU)
 state_ibu <- state_ibu %>% drop_na(IBU)
 ```
+
 
 ## 4. Compute the median alcohol content and international bitterness unit for each
 ##state. Plot a bar chart 
@@ -98,15 +102,18 @@ avg_state_ibu <- avg_state_ibu[order(avg_state_ibu$Average_IBU, decreasing=TRUE)
 # Plot Average Alcohol by Volume per state
 ggplot(avg_state_abv, aes(x=reorder(State, desc(Average_ABV)), y=Average_ABV, fill=State)) + 
        geom_col(show.legend = FALSE, width=.9, position="dodge") +
+       ggtitle("Average ABV per State") +
        xlab("State") + 
        ylab("Average Alcohol by Volume") 
 
 # Plot Average International Bitterness Unit per State 
 ggplot(avg_state_ibu, aes(x=reorder(State, desc(Average_IBU)), y=Average_IBU, fill=State)) + 
        geom_col(show.legend = FALSE, width=.9, position="dodge") +
+       ggtitle("Average IBU per State") + 
        xlab("State") + 
        ylab("Average IBU")
 ```
+
 
 ## 5. Which state has the the Max ABV. Which has the 
 ```{r}
@@ -117,12 +124,14 @@ state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),] # WV
 ```
 ### Nevada has the highest percentage of alcohal by volume while West Virginia has the highest IBU. 
 
+
 ## 6. Comment on the Summary stats and distribution of the ABV variable 
 ```{r}
 summary(state_abv)
 ggplot(state_abv, aes(x=ABV)) + geom_histogram() # Right Skewness
 ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
 ```
+
 
 ##7. Is there an apparent relationship between the bitterness of the beer and its alcoholic content? 
 ```{r}
@@ -135,15 +144,18 @@ beer_data_no_na <- beer_data_no_na %>% drop_na(IBU)
 # Scatter plot to show raw data 
 ggplot(beer_data_no_na, aes(x=ABV, y=IBU, colour=Style)) + 
        geom_point(show.legend = FALSE) + 
+       ggtitle("ABV vs IBU") +
        xlab("ABV in %") + 
        ylab("IBU")
 
 # Plot a smooth curve to see a more "linear" pattern 
 ggplot(beer_data_no_na, aes(x=ABV, y=IBU)) + 
        geom_smooth() +
+       ggtitle("ABV vs IBU") + 
        xlab("ABV in %") + 
        ylab("IBU")
 ```
+
 
 ## 8. investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) 
 #and other types of Ale. Use KNN.
