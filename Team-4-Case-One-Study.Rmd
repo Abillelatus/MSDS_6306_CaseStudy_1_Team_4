@@ -59,6 +59,12 @@ colnames(full_brew_data)[5] <- "Beer_Name"
 # Print first 6 and last 6 observations 
 head(full_brew_data, n=6)
 tail(full_brew_data, n=6)
+
+# Create CSV Files for head and tail 
+head_output_csv <- "./output/head_beer_data.csv"
+tail_output_csv <- "./output/tail_been_data.csv"
+write.csv(head(full_brew_data, n=6), head_output_csv)
+write.csv(tail(full_brew_data, n=6), tail_output_csv)
 ```
 
 ## 3. Address any <NA> values
@@ -109,11 +115,13 @@ state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),] # NV
 # Get the State with the highest average IBU
 state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),] # WV
 ```
+### Nevada has the highest percentage of alcohal by volume while West Virginia has the highest IBU. 
 
 ## 6. Comment on the Summary stats and distribution of the ABV variable 
 ```{r}
 summary(state_abv)
 ggplot(state_abv, aes(x=ABV)) + geom_histogram() # Right Skewness
+ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
 ```
 
 ##7. Is there an apparent relationship between the bitterness of the beer and its alcoholic content? 
@@ -139,7 +147,7 @@ ggplot(beer_data_no_na, aes(x=ABV, y=IBU)) +
 
 ## 8. investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) 
 #and other types of Ale. Use KNN.
-```{r}
+```{r, include=FALSE}
 # Create a data frame with only IPA's
 #df1[grep("dog",df1$type),]
 ipa_beers <- beer_data_no_na[grep("IPA",beer_data_no_na$Style),]
