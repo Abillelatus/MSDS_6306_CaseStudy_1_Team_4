@@ -105,9 +105,9 @@ ggplot(avg_state_ibu, aes(x=reorder(State, desc(Average_IBU)), y=Average_IBU, fi
 ## 5. Which state has the the Max ABV. Which has the 
 ```{r}
 # Get the State with the highest average ABV
-state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),]
+state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),] # NV
 # Get the State with the highest average IBU
-state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),]
+state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),] # WV
 ```
 
 ## 6. Comment on the Summary stats and distribution of the ABV variable 
