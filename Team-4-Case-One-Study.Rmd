@@ -126,17 +126,71 @@ beer_data_no_na <- beer_data_no_na %>% drop_na(IBU)
 
 # Scatter plot to show raw data 
 ggplot(beer_data_no_na, aes(x=ABV, y=IBU, colour=Style)) + 
-                        geom_point(show.legend = FALSE) + 
-                        xlab("ABV in %") + 
-                        ylab("IBU")
+       geom_point(show.legend = FALSE) + 
+       xlab("ABV in %") + 
+       ylab("IBU")
 
 # Plot a smooth curve to see a more "linear" pattern 
 ggplot(beer_data_no_na, aes(x=ABV, y=IBU)) + 
-                        geom_smooth() +
-                        xlab("ABV in %") + 
-                        ylab("IBU")
+       geom_smooth() +
+       xlab("ABV in %") + 
+       ylab("IBU")
 ```
 
+## 8. investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) 
+#and other types of Ale. Use KNN.
+```{r}
+# Create a data frame with only IPA's
+#df1[grep("dog",df1$type),]
+ipa_beers <- beer_data_no_na[grep("IPA",beer_data_no_na$Style),]
+# Change the Sytle column to only have the value of IPA for easier model training
+ipa_beers$Style <- "IPA"
+
+ales_beer <- beer_data_no_na[grep("Ale",beer_data_no_na$Style),]
+# Change the Sytle column to only have the value of Ale for easier model training
+ales_beer$Style <- "Ale"
+
+# Combine the two data sets 
+ipas_and_ales <- rbind(ipa_beers, ales_beer)
+
+# plot the data to get an initial view of the data
+ggplot(ipas_and_ales, aes(x=ABV, y=IBU, colour=Style)) + geom_point()
+
+# Create train and test data frames
+ipas_and_ales_train <- ipas_and_ales # train data needs to be a duplicate of orig
+ipas_and_ales_test <- data.frame()
+
+# Split 70/30 (Train/Test)
+samples_to_take <- round(as.numeric(nrow(ipas_and_ales_train)*.3), digits=0)
+for (row in 1:samples_to_take) {
+  tmp_row <- sample_n(ipas_and_ales_train, 1) # Take sample
+  # Add Sample to test data
+  ipas_and_ales_test <- ipas_and_ales_test %>% rbind(tmp_row)
+  # Remove Sample from train data
+  ipas_and_ales_train <- ipas_and_ales_train[!(ipas_and_ales_train$Beer_ID==tmp_row$Beer_ID),]
+}
+
+# find an optimal K value for the KNN model
+style_accuracy <- data.frame(accuract=numeric(50), k=numeric(50))
+for (iter in 1:50) {
+  style_class <- knn(ipas_and_ales_train[,c(3,4)], ipas_and_ales_test[c(3,4)],
+                     ipas_and_ales_train$Style,
+                     prob=TRUE, k=iter)
+  table(ipas_and_ales_test$Style, style_class)
+  cm <- confusionMatrix(table(ipas_and_ales_test$Style, style_class))
+  style_accuracy$accuracy[iter] <- cm$overall[1]
+  style_accuracy$k[iter] <- iter
+}
+#plot(style_accuracy$k, style_accuracy$accuracy, type="l", xlab="k")
+plot_ly(style_accuracy, x=style_accuracy$k, y=style_accuracy$accuracy, 
+        type="scatter", mode="lines")
+
+##
+## On average this loop gives me an optimal k level of k=5,6,7
+##
+
+
+```
 
 
 
