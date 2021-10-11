@@ -21,6 +21,9 @@ library(caret)
 library(e1071)
 library(tm)
 library(mvtnorm)
+library(xlsx)
+library(leaflet)
+library(ggvis)
 ```
 
 ## Setup
@@ -32,6 +35,13 @@ breweries_csv_loc <- "./StartingDBs/Breweries.csv"
 # Read in data 
 beer_data <- read.csv(beer_csv_loc, header = TRUE)
 brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
+
+# Data provided by Celia
+# Celia's contributions prefied by cb_
+cb_beer <- read.xlsx(file="./StartingDBs/Beers_Celia.xlsx", sheetIndex = 1, 
+                     header=TRUE, stringsAsFactors = FALSE)
+cb_brewery <- read.xlsx(file="./StartingDBs/Breweries_Celia.xlsx", sheetIndex = 1, 
+                     header=TRUE, stringsAsFactors = FALSE)
 ```
 
 
@@ -42,6 +52,40 @@ brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
 # Create a seperate data frame to store state data 
 ### Note: This data set counts the district of columbia as a state
 num_of_breweries_by_state <- data.frame(table(brewery_data$State))
+
+##### Celia Banks #####
+#Begin prepare an interactive geo map of breweries by state
+#set the map
+leaflet() %>% addTiles()
+#add popup for brewery information
+brewery_map <- cb_brewery %>% mutate(popup_info=paste(Name,"<br/>",City,"<br>",State,"<br>"))
+#tweak the map with info layout, set circles smaller to enhance visual
+leaflet() %>% addTiles() %>% addCircleMarkers(data=brewery_map, 
+                                              lat=~Latitude, 
+                                              lng=~Longitude, 
+                                              radius=~1, 
+                                              popup=~popup_info)
+#End prepare an interactive geo map of breweries by state#
+
+#corresponding distribution plot of breweries by state
+ggplot(brewery_map, aes(x=as.factor(State), color="blue")) +
+       geom_bar(color="blue") +
+       ggtitle("Distribution of Breweries by State") +
+       xlab("State") +
+       geom_text(stat='count', aes(label=after_stat(count)), vjust=-.25) +
+       theme(legend.position="none", axis.text.x = element_text(angle = 90)) +
+       theme(plot.title = element_text(hjust = 0.5))
+
+#corresponding distribution plot of breweries by region
+ggplot(brewery_map, aes(x=as.factor(Region), color="green")) +
+       geom_bar(color="green") +
+       ggtitle("Distribution of Breweries by Region") +
+       xlab("Region") +
+       geom_text(stat='count', aes(label=after_stat(count)), vjust=-.25) +
+       theme(legend.position="none", axis.text.x = element_text(angle = 90)) +
+       theme(plot.title = element_text(hjust = 0.5))
+
+##### END CB #####
 ```
 
 
@@ -113,6 +157,57 @@ ggplot(avg_state_ibu, aes(x=reorder(State, desc(Average_IBU)), y=Average_IBU, fi
        xlab("State") + 
        ylab("Average IBU")
 ```
+
+
+## 4.1 Additional data provided by Celia 
+```{r}
+##### Celia Code #####
+merge_bb <- merge(cb_beer, cb_brewery, by.x="Brewery_id", by.y="Brew_ID")
+#Drop latitude and longitude columns as no longer needed
+drop <- c("Latitude","Longitude")
+
+cb_merged_bb <- merge_bb[,!(names(merge_bb) %in% drop)]
+
+#rename columns to avoid confusion
+#cb_merged_bb <- cb_merged_bb %>% rename(Beer_Name = Name.x, Brewery_Name = Name.y)
+### RAH ###
+colnames(cb_merged_bb)[2] <- "Beer_Name"
+colnames(cb_merged_bb)[8] <- "Brewery_Name"
+### End RAH ###
+
+#get count of breweries in each state
+brewery_count <- aggregate(Brewery_id ~ State, cb_merged_bb, sum)
+aggregate(cb_merged_bb$Brewery_id, by=list(Category=cb_merged_bb$State), FUN=sum)
+
+#impute the rows with zeroes
+cb_merged_bb$ABV[is.na(cb_merged_bb$ABV)] <- 0
+cb_merged_bb$IBU[is.na(cb_merged_bb$IBU)] <- 0
+
+#compute median ABV and IBU for each state
+cb_medianABV <- aggregate(ABV ~ State + Region, cb_merged_bb, median)
+cb_medianIBU <- aggregate(IBU ~ State + Region, cb_merged_bb, median)
+
+#merge the medians dataframes
+cb_mergeABVIBU <- merge(cb_medianABV, cb_medianIBU, by="State")
+drop <- c("Region.y")
+cb_mergeABVIBU = merge_bb[,!(names(merge_bb) %in% drop)]
+
+#Visualize ABV v IBU medians by state and by region
+options(scipen = 999)
+cb_mergeABVIBU <- as.data.frame(cb_mergeABVIBU)
+
+#by state
+ggplot(cb_mergeABVIBU, aes(ABV, IBU, color=State)) +
+       geom_point(show.legend = FALSE) +
+       facet_wrap(vars(State)) 
+
+#by region
+ggplot(cb_mergeABVIBU, aes(ABV, IBU, color=Region)) +
+       geom_point() +
+       facet_wrap(vars(Region))
+##### END #####
+```
+
 
 
 ## 5. Which state has the the Max ABV. Which has the 
