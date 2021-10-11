@@ -213,9 +213,11 @@ ggplot(cb_mergeABVIBU, aes(ABV, IBU, color=Region)) +
 ## 5. Which state has the the Max ABV. Which has the 
 ```{r}
 # Get the State with the highest average ABV
-state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),] # NV
+state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),] # KY
+state_max_abv
 # Get the State with the highest average IBU
-state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),] # WV
+state_max_ibu <- avg_state_ibu[which.max(avg_state_ibu$Average_IBU),] # ME
+state_max_ibu
 ```
 ### Nevada has the highest percentage of alcohal by volume while West Virginia has the highest IBU. 
 
