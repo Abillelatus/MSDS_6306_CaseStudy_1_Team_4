@@ -130,7 +130,7 @@ state_ibu <- state_ibu %>% drop_na(IBU)
 ##state. Plot a bar chart 
 ```{r, fig.height=7, fig.width=12}
 # Find the average ABV for the state_abv table 
-avg_state_abv <- ddply(state_abv, .(State), function(x) mean(x$ABV))
+avg_state_abv <- ddply(state_abv, .(State), function(x) median(x$ABV))
 colnames(avg_state_abv)[2] <- "Average_ABV" # Rename the column
 # Drop DC. It's not a state....yet
 avg_state_abv <- avg_state_abv[-c(8),] # DC is equal to position 8 on the table 
@@ -138,7 +138,7 @@ avg_state_abv <- avg_state_abv[-c(8),] # DC is equal to position 8 on the table
 avg_state_abv <- avg_state_abv[order(avg_state_abv$Average_ABV, decreasing=TRUE),]
 
 # Find Average IBU
-avg_state_ibu <- ddply(state_ibu, .(State), function(x) mean(x$IBU))
+avg_state_ibu <- ddply(state_ibu, .(State), function(x) median(x$IBU))
 colnames(avg_state_ibu)[2] <- "Average_IBU" # Rename column
 # Order the states by IBU Decending 
 avg_state_ibu <- avg_state_ibu[order(avg_state_ibu$Average_IBU, decreasing=TRUE),]
