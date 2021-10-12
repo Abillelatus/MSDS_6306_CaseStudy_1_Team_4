@@ -131,31 +131,31 @@ state_ibu <- state_ibu %>% drop_na(IBU)
 ```{r, fig.height=7, fig.width=12}
 # Find the average ABV for the state_abv table 
 avg_state_abv <- ddply(state_abv, .(State), function(x) median(x$ABV))
-colnames(avg_state_abv)[2] <- "Average_ABV" # Rename the column
+colnames(avg_state_abv)[2] <- "Median_ABV" # Rename the column
 # Drop DC. It's not a state....yet
 avg_state_abv <- avg_state_abv[-c(8),] # DC is equal to position 8 on the table 
 # Order the states by Decending ABV content 
-avg_state_abv <- avg_state_abv[order(avg_state_abv$Average_ABV, decreasing=TRUE),]
+avg_state_abv <- avg_state_abv[order(avg_state_abv$Median_ABV, decreasing=TRUE),]
 
 # Find Average IBU
 avg_state_ibu <- ddply(state_ibu, .(State), function(x) median(x$IBU))
-colnames(avg_state_ibu)[2] <- "Average_IBU" # Rename column
+colnames(avg_state_ibu)[2] <- "Median_IBU" # Rename column
 # Order the states by IBU Decending 
-avg_state_ibu <- avg_state_ibu[order(avg_state_ibu$Average_IBU, decreasing=TRUE),]
+avg_state_ibu <- avg_state_ibu[order(avg_state_ibu$Median_IBU, decreasing=TRUE),]
 
 # Plot Average Alcohol by Volume per state
-ggplot(avg_state_abv, aes(x=reorder(State, desc(Average_ABV)), y=Average_ABV, fill=State)) + 
+ggplot(avg_state_abv, aes(x=reorder(State, desc(Median_ABV)), y=Median_ABV, fill=State)) + 
        geom_col(show.legend = FALSE, width=.9, position="dodge") +
-       ggtitle("Average ABV per State") +
+       ggtitle("Median ABV per State") +
        xlab("State") + 
-       ylab("Average Alcohol by Volume") 
+       ylab("Median Alcohol by Volume") 
 
 # Plot Average International Bitterness Unit per State 
-ggplot(avg_state_ibu, aes(x=reorder(State, desc(Average_IBU)), y=Average_IBU, fill=State)) + 
+ggplot(avg_state_ibu, aes(x=reorder(State, desc(Median_IBU)), y=Median_IBU, fill=State)) + 
        geom_col(show.legend = FALSE, width=.9, position="dodge") +
-       ggtitle("Average IBU per State") + 
+       ggtitle("Median IBU per State") + 
        xlab("State") + 
-       ylab("Average IBU")
+       ylab("Median IBU")
 ```
 
 
@@ -213,12 +213,12 @@ ggplot(cb_mergeABVIBU, aes(ABV, IBU, color=Region)) +
 ## 5. Which state has the the Max ABV. Which has the 
 ```{r}
 # Get the State with the highest average ABV
-#state_max_abv <- avg_state_abv[which.max(avg_state_abv$Average_ABV),] # KY
+#state_max_abv <- avg_state_abv[which.max(avg_state_abv$Median_ABV),] # KY
 state_max_abv <- full_brew_data[which.max(full_brew_data$ABV),] # CO
 state_max_abv[c(4,7)]
 # Get the State with the highest average IBU
 state_max_ibu <- full_brew_data[which.max(full_brew_data$IBU),] # OR
-state_max_ibu[c(4,7)]
+state_max_ibu[c(4,8)]
 ```
 ### Kentucky has the highest percentage of alcohal by volume while Maine has the highest IBU. 
 
