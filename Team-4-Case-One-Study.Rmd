@@ -1,6 +1,7 @@
 ---
 title: "Team-4-Case-One-Study"
 output: html_document
+authors: "Ryan Herrin, Celia Banks, Akib Hossain"
 ---
 
 ```{r setup, include=FALSE}
@@ -37,13 +38,13 @@ beer_data <- read.csv(beer_csv_loc, header = TRUE)
 brewery_data <- read.csv(breweries_csv_loc, header = TRUE)
 
 # Data provided by Celia
-# Celia's contributions prefied by cb_
+# Celia's contributions prefixed by cb_
 cb_beer <- read.xlsx(file="./StartingDBs/Beers_Celia.xlsx", sheetIndex = 1, 
                      header=TRUE, stringsAsFactors = FALSE)
 cb_brewery <- read.xlsx(file="./StartingDBs/Breweries_Celia.xlsx", sheetIndex = 1, 
                      header=TRUE, stringsAsFactors = FALSE)
 ```
-Testing the text output
+Setting up the initial DB's and reading them into a data frame. 
 
 
 # Case study Questions 
@@ -76,6 +77,9 @@ ggplot(brewery_map, aes(x=as.factor(State), color="blue")) +
        theme(legend.position="none", axis.text.x = element_text(angle = 90)) +
        theme(plot.title = element_text(hjust = 0.5))
 
+# Create data frame to access state count data 
+num_of_brew_by_state <- data.frame(as.factor(brewery_map$State))
+
 #corresponding distribution plot of breweries by region
 ggplot(brewery_map, aes(x=as.factor(Region), color="green")) +
        geom_bar(color="green") +
@@ -87,6 +91,12 @@ ggplot(brewery_map, aes(x=as.factor(Region), color="green")) +
 
 ##### END CB #####
 ```
+The number of breweries per state are as follows:
+AK:7, AL:3, AR:2, AZ:11, CA:39, CO:47, CT:8, DC:1, DE:2, FL:15, GA:7, HI:4,
+IA:5, ID:5, IL:18, IN:22, KS:3, KY:4, LA:5, MA:23, MD:7, ME:9, MI:32, MN:12,
+MO:9, MS:2, MT:9, NC:19, ND:1, NE:5, NH:3, NJ:3, NM:4, NV:2, NY:15, OH:15, 
+OK:6, OR:29, PA:25, RI:5, SC:4, SD:1, TN:3, TX:28, UT:4, VA:16, VT:10, WA:23,
+WI:20, WV:1, WY:4
 
 
 ## 2. Merge beer data with the breweries data. Print the first 6 observations and
@@ -112,6 +122,8 @@ tail_output_csv <- "./output/tail_been_data.csv"
 write.csv(head(full_brew_data, n=6), head_output_csv)
 write.csv(tail(full_brew_data, n=6), tail_output_csv)
 ```
+The first and last 6 observations were written to CSV files in the "output" 
+file directory as well as printed in this file. 
 
 
 ## 3. Address any NA values
@@ -124,6 +136,10 @@ state_abv <- state_abv %>% drop_na(ABV)
 state_ibu <- data.frame(State=full_brew_data$State, IBU=full_brew_data$IBU)
 state_ibu <- state_ibu %>% drop_na(IBU)
 ```
+Multiple Data sets were created throught to handle specific questions. For 
+example; if the question asked for the comparison between ABV and IBU then any 
+beer with an NA for either would be dropped. For a question where ABV or IBU was
+not needed, then all data would be retained.
 
 
 ## 4. Compute the median alcohol content and international bitterness unit for each
@@ -207,20 +223,22 @@ ggplot(cb_mergeABVIBU, aes(ABV, IBU, color=Region)) +
        facet_wrap(vars(Region))
 ##### END #####
 ```
-
+Celia was able to create a ABV vs IBU for state and regions. This gave us 
+additional data to make assumptions from. 
 
 
 ## 5. Which state has the the Max ABV. Which has the 
 ```{r}
 # Get the State with the highest average ABV
-#state_max_abv <- avg_state_abv[which.max(avg_state_abv$Median_ABV),] # KY
 state_max_abv <- full_brew_data[which.max(full_brew_data$ABV),] # CO
 state_max_abv[c(4,7)]
 # Get the State with the highest average IBU
 state_max_ibu <- full_brew_data[which.max(full_brew_data$IBU),] # OR
 state_max_ibu[c(4,8)]
 ```
-### Kentucky has the highest percentage of alcohal by volume while Maine has the highest IBU. 
+Colorado has the highest percentage of alcohal by volume while Oregon has the 
+highest IBU. Keep in mind the question was asking for the max and not the max
+average.
 
 
 ## 6. Comment on the Summary stats and distribution of the ABV variable 
@@ -229,6 +247,8 @@ summary(state_abv)
 ggplot(state_abv, aes(x=ABV)) + geom_histogram() # Right Skewness
 ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
 ```
+Most of the beer created fell inbetween 5.0% - 6.7% ABV with a mean of 5.9% and 
+a median of 5.6%. There is also a noticeable right skewness to the distribution.
 
 
 ##7. Is there an apparent relationship between the bitterness of the beer and its alcoholic content? 
@@ -253,6 +273,10 @@ ggplot(beer_data_no_na, aes(x=ABV, y=IBU)) +
        xlab("ABV in %") + 
        ylab("IBU")
 ```
+According to the charts there is a obvious positive correlation between ABV and
+IBU. After further investigation on why this could be, we found many answers 
+but not one that stood out. The most common answer was that the longeryou boil 
+hops to increase the IBU, the alcohol (ABV) goes up to ballance the bitterness.
 
 
 ## 8. investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) 
