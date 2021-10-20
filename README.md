@@ -9,9 +9,12 @@ This project code was used to analyze brewery and beer data. This data was then 
 
 
 Outline:
-+ /Docs 					#Requirements documentation
-+ /Output 				#Generated Knit HTML and printed head/tail
-+ /StartingDBs 			#Provided Starting Databases
++ Docs/
+  #Requirements documentation
++ Output/ 				
+  #Generated Knit HTML and printed head/tail
++ StartingDBs/ 			
+  #Provided Starting Databases
 - .gitignore 
 - Team4_EDA_Presentation_Celia-Ryan-Akib.pptx
 - Team-4-Case-One-Study.Rmd
