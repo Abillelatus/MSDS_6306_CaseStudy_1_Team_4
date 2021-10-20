@@ -281,7 +281,7 @@ hops to increase the IBU, the alcohol (ABV) goes up to ballance the bitterness.
 
 ## 8. investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) 
 #and other types of Ale. Use KNN.
-```{r, include=FALSE}
+```{r}
 # Create a data frame with only IPA's
 #df1[grep("dog",df1$type),]
 ipa_beers <- beer_data_no_na[grep("IPA",beer_data_no_na$Style),]
@@ -298,11 +298,12 @@ ipas_and_ales <- rbind(ipa_beers, ales_beer)
 # plot the data to get an initial view of the data
 ggplot(ipas_and_ales, aes(x=ABV, y=IBU, colour=Style)) + geom_point()
 
-# Create train and test data frames
+# Create empty train and test data frames
 ipas_and_ales_train <- ipas_and_ales # train data needs to be a duplicate of orig
 ipas_and_ales_test <- data.frame()
 
-# Split 70/30 (Train/Test)
+# Split 70/30 (Train/Test) #
+# Find the 30% value 
 samples_to_take <- round(as.numeric(nrow(ipas_and_ales_train)*.3), digits=0)
 for (row in 1:samples_to_take) {
   tmp_row <- sample_n(ipas_and_ales_train, 1) # Take sample
@@ -313,7 +314,7 @@ for (row in 1:samples_to_take) {
 }
 
 # find an optimal K value for the KNN model
-style_accuracy <- data.frame(accuract=numeric(50), k=numeric(50))
+style_accuracy <- data.frame(accuracy=numeric(50), k=numeric(50))
 for (iter in 1:50) {
   style_class <- knn(ipas_and_ales_train[,c(3,4)], ipas_and_ales_test[c(3,4)],
                      ipas_and_ales_train$Style,
