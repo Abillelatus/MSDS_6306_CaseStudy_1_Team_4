@@ -186,7 +186,7 @@ cb_merged_bb <- merge_bb[,!(names(merge_bb) %in% drop)]
 
 #rename columns to avoid confusion
 #cb_merged_bb <- cb_merged_bb %>% rename(Beer_Name = Name.x, Brewery_Name = Name.y)
-### RAH ###
+### RAH - used a different method of renaming columns ###
 colnames(cb_merged_bb)[2] <- "Beer_Name"
 colnames(cb_merged_bb)[8] <- "Brewery_Name"
 ### End RAH ###
@@ -243,6 +243,7 @@ average.
 
 ## 6. Comment on the Summary stats and distribution of the ABV variable 
 ```{r}
+# Get summary and disply a histogram and boxplot
 summary(state_abv)
 ggplot(state_abv, aes(x=ABV)) + geom_histogram() # Right Skewness
 ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
@@ -281,7 +282,7 @@ hops to increase the IBU, the alcohol (ABV) goes up to ballance the bitterness.
 
 ## 8. investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) 
 #and other types of Ale. Use KNN.
-```{r, include=FALSE}
+```{r}
 # Create a data frame with only IPA's
 #df1[grep("dog",df1$type),]
 ipa_beers <- beer_data_no_na[grep("IPA",beer_data_no_na$Style),]
@@ -298,11 +299,12 @@ ipas_and_ales <- rbind(ipa_beers, ales_beer)
 # plot the data to get an initial view of the data
 ggplot(ipas_and_ales, aes(x=ABV, y=IBU, colour=Style)) + geom_point()
 
-# Create train and test data frames
+# Create empty train and test data frames
 ipas_and_ales_train <- ipas_and_ales # train data needs to be a duplicate of orig
 ipas_and_ales_test <- data.frame()
 
-# Split 70/30 (Train/Test)
+# Split 70/30 (Train/Test) #
+# Find the 30% value 
 samples_to_take <- round(as.numeric(nrow(ipas_and_ales_train)*.3), digits=0)
 for (row in 1:samples_to_take) {
   tmp_row <- sample_n(ipas_and_ales_train, 1) # Take sample
@@ -312,25 +314,43 @@ for (row in 1:samples_to_take) {
   ipas_and_ales_train <- ipas_and_ales_train[!(ipas_and_ales_train$Beer_ID==tmp_row$Beer_ID),]
 }
 
+# Declare how many interations to run
+k_iterations <- 20
+
 # find an optimal K value for the KNN model
-style_accuracy <- data.frame(accuract=numeric(50), k=numeric(50))
-for (iter in 1:50) {
-  style_class <- knn(ipas_and_ales_train[,c(3,4)], ipas_and_ales_test[c(3,4)],
+style_accuracy <- data.frame(accuracy=numeric(k_iterations), k=numeric(k_iterations))
+for (iter in 1:k_iterations) {
+  # Note: [,c(3,4)] represent the ABV and IBU columns
+  style_class <- knn(ipas_and_ales_train[,c(3,4)], 
+                     ipas_and_ales_test[,c(3,4)],
                      ipas_and_ales_train$Style,
-                     prob=TRUE, k=iter)
+                     prob=TRUE, 
+                     k=iter)
   table(ipas_and_ales_test$Style, style_class)
   cm <- confusionMatrix(table(ipas_and_ales_test$Style, style_class))
   style_accuracy$accuracy[iter] <- cm$overall[1]
   style_accuracy$k[iter] <- iter
 }
+
 #plot(style_accuracy$k, style_accuracy$accuracy, type="l", xlab="k")
 plot_ly(style_accuracy, x=style_accuracy$k, y=style_accuracy$accuracy, 
         type="scatter", mode="lines")
 
 ##
 ## On average this loop gives me an optimal k level of k=5,6,7
-##
+## Use 6 as the choice k
+optimal_k <- 6
 
+# Create knn classification for Ale and IPA
+ale_ipa_classification <- knn(ipas_and_ales_train[,c(3,4)], 
+                              ipas_and_ales_test[,c(3,4)],
+                              ipas_and_ales_train$Style,
+                              prob=TRUE, 
+                              k=optimal_k) # K determined by above comment
+
+# Create confusion matrix based on ale_ipa_classification
+ale_ipa_cm <- confusionMatrix(table(ipas_and_ales_test$Style, 
+                                    ale_ipa_classification))
 
 ```
 
