@@ -48,6 +48,7 @@ cb_beer <- read.xlsx(file="./StartingDBs/Beers_Celia.xlsx", sheetIndex = 1,
 cb_brewery <- read.xlsx(file="./StartingDBs/Breweries_Celia.xlsx", sheetIndex = 1, 
                      header=TRUE, stringsAsFactors = FALSE)
 ```
+
 Setting up the initial DB's and reading them into a data frame. 
 
 
@@ -95,6 +96,7 @@ ggplot(brewery_map, aes(x=as.factor(Region), color="green")) +
 
 ##### END CB #####
 ```
+
 The number of breweries per state are as follows:
 AK:7, AL:3, AR:2, AZ:11, CA:39, CO:47, CT:8, DC:1, DE:2, FL:15, GA:7, HI:4,
 IA:5, ID:5, IL:18, IN:22, KS:3, KY:4, LA:5, MA:23, MD:7, ME:9, MI:32, MN:12,
@@ -126,6 +128,7 @@ tail_output_csv <- "./output/tail_been_data.csv"
 write.csv(head(full_brew_data, n=6), head_output_csv)
 write.csv(tail(full_brew_data, n=6), tail_output_csv)
 ```
+
 The first and last 6 observations were written to CSV files in the "output" 
 file directory as well as printed in this file. 
 
@@ -140,6 +143,7 @@ state_abv <- state_abv %>% drop_na(ABV)
 state_ibu <- data.frame(State=full_brew_data$State, IBU=full_brew_data$IBU)
 state_ibu <- state_ibu %>% drop_na(IBU)
 ```
+
 Multiple Data sets were created throught to handle specific questions. For 
 example; if the question asked for the comparison between ABV and IBU then any 
 beer with an NA for either would be dropped. For a question where ABV or IBU was
@@ -179,7 +183,7 @@ ggplot(avg_state_ibu, aes(x=reorder(State, desc(Median_IBU)), y=Median_IBU, fill
 ```
 
 
-## 4.1 Additional data provided by Celia 
+## 4.1 Additional data
 ```{r}
 ##### Celia Code #####
 merge_bb <- merge(cb_beer, cb_brewery, by.x="Brewery_id", by.y="Brew_ID")
@@ -227,6 +231,7 @@ ggplot(cb_mergeABVIBU, aes(ABV, IBU, color=Region)) +
        facet_wrap(vars(Region))
 ##### END #####
 ```
+
 Celia was able to create a ABV vs IBU for state and regions. This gave us 
 additional data to make assumptions from. 
 
@@ -240,6 +245,7 @@ state_max_abv[c(4,7)]
 state_max_ibu <- full_brew_data[which.max(full_brew_data$IBU),] # OR
 state_max_ibu[c(4,8)]
 ```
+
 Colorado has the highest percentage of alcohal by volume while Oregon has the 
 highest IBU. Keep in mind the question was asking for the max and not the max
 average.
@@ -252,6 +258,7 @@ summary(state_abv)
 ggplot(state_abv, aes(x=ABV)) + geom_histogram() # Right Skewness
 ggplot(state_abv, aes(x=ABV)) + geom_boxplot()
 ```
+
 Most of the beer created fell inbetween 5.0% - 6.7% ABV with a mean of 5.9% and 
 a median of 5.6%. There is also a noticeable right skewness to the distribution.
 
@@ -278,6 +285,7 @@ ggplot(beer_data_no_na, aes(x=ABV, y=IBU)) +
        xlab("ABV in %") + 
        ylab("IBU")
 ```
+
 According to the charts there is a obvious positive correlation between ABV and
 IBU. After further investigation on why this could be, we found many answers 
 but not one that stood out. The most common answer was that the longeryou boil 
@@ -348,7 +356,7 @@ optimal_k <- 6
 # START Multi-Class prediction confidence with Heatmap
 # Use existing Training and Test Data Frames 
 
-# assing IBU column as numeric to keep it the same as ABV
+# assign IBU column values as numeric to keep it the same as ABV
 ipas_and_ales_train$IBU <- as.numeric(ipas_and_ales_train$IBU)
 ipas_and_ales_test$IBU <- as.numeric(ipas_and_ales_test$IBU)
 # classification models require the outcome to be of type factor()
@@ -413,25 +421,102 @@ ale_ipa_fig <- ale_ipa_fig %>%
 ale_ipa_fig <- ale_ipa_fig %>% add_trace(x=grid_l_range, y=grid_w_range, z=diff, type='heatmap')
 ale_ipa_fig
 ```
+
 Using KNN and plotly to generate the above graph you can see the relationship 
 of Ales to IPAs. If you zoom into the chart you will be able to see that below 
 60 IBU the beer is predicted to be an Ale, but as IBU approached 60 and upward 
 the beer is likely to be classified as an IPA. With ABV having a positive 
-correlation with IBU the ABV is less of a factor in determining the beer Style. 
+correlation with IBU the ABV is less of a factor in determining the beer Style.
+You need to zoom in to get the full affect. 
 
 
+## 9. Additional usefule data 
+```{r}
+# My goal here is to find the most popular style of beer for each region 
+#
+# Create a new data set based on the fully merged data at the start 
+style_by_region <- data.frame(full_brew_data)
 
+# Remove NA values for City, State, and Style 
+#state_ibu <- state_ibu %>% drop_na(IBU)
+style_by_region <- style_by_region %>% drop_na(City)
+style_by_region <- style_by_region %>% drop_na(State)
+style_by_region <- style_by_region %>% drop_na(Style)
 
+# Add region data by left joining from brewery_map using Brew_ID as primary key
+style_by_region <- left_join(style_by_region, brewery_map[,c("Brew_ID", "Region")])
+# Drop the columns not needed to make it easier to read
+style_by_region <- data.frame(style_by_region$Style, style_by_region$Region)
 
+# Lets break up the data by region 
+style_by_midwest <- filter(style_by_region, 
+                           style_by_region$style_by_region.Region == "Midwest")
+style_by_northeast <- filter(style_by_region, 
+                             style_by_region$style_by_region.Region == "Northeast")
+style_by_southeast <- filter(style_by_region, 
+                             style_by_region$style_by_region.Region == "Southeast")
+style_by_southwest <- filter(style_by_region, 
+                             style_by_region$style_by_region.Region == "Southwest")
+style_by_west <- filter(style_by_region, 
+                        style_by_region$style_by_region.Region == "West")
 
+# Find the top 5 styles per region
+style_by_midwest <- data.frame(table(style_by_midwest$style_by_region.Style))
+style_by_midwest <- style_by_midwest[order(style_by_midwest$Freq, decreasing = TRUE),]
+style_by_midwest <- head(style_by_midwest, n=5)
 
+style_by_northeast <- data.frame(table(style_by_northeast$style_by_region.Style))
+style_by_northeast <- style_by_northeast[order(style_by_northeast$Freq, decreasing = TRUE),]
+style_by_northeast <- head(style_by_northeast, n=5)
 
+style_by_southeast <- data.frame(table(style_by_southeast$style_by_region.Style))
+style_by_southeast <- style_by_southeast[order(style_by_southeast$Freq, decreasing = TRUE),]
+style_by_southeast <- head(style_by_southeast, n=5)
 
+style_by_southwest <- data.frame(table(style_by_southwest$style_by_region.Style))
+style_by_southwest <- style_by_southwest[order(style_by_southwest$Freq, decreasing = TRUE),]
+style_by_southwest <- head(style_by_southwest, n=5)
 
+style_by_west <- data.frame(table(style_by_west$style_by_region.Style))
+style_by_west <- style_by_west[order(style_by_west$Freq, decreasing = TRUE),]
+style_by_west <- head(style_by_west, n=5)
 
+# Create some bar charts to show results 
+# Midwest
+ggplot(style_by_midwest, aes(x=Var1, y=Freq, fill=Var1)) +
+       geom_col(show.legend = FALSE) +
+       ggtitle("Top 5 Styles for Midwest") +
+       xlab("Style") + ylab("Number of Style")
+# Northeast
+ggplot(style_by_northeast, aes(x=Var1, y=Freq, fill=Var1)) +
+       geom_col(show.legend = FALSE) +
+       ggtitle("Top 5 Styles for Northeast") +
+       xlab("Style") + ylab("Number of Style")
+# Southeast
+ggplot(style_by_southeast, aes(x=Var1, y=Freq, fill=Var1)) +
+       geom_col(show.legend = FALSE) +
+       ggtitle("Top 5 Styles for Southeast") +
+       xlab("Style") + ylab("Number of Style")
+# Southwest
+ggplot(style_by_southwest, aes(x=Var1, y=Freq, fill=Var1)) +
+       geom_col(show.legend = FALSE) +
+       ggtitle("Top 5 Styles for Southwest") +
+       xlab("Style") + ylab("Number of Style")
+# West
+ggplot(style_by_west, aes(x=Var1, y=Freq, fill=Var1)) +
+       geom_col(show.legend = FALSE) +
+       ggtitle("Top 5 Styles for West") +
+       xlab("Style") + ylab("Number of Style")
+```
 
+The results from my research shows two points. 
+1. The top two styles for every region is an "American IPA" and an 
+"American Pale Ale". 
+2. The third most popular style of beer is what is different between the 
+regions. Results as follows for the 3rd most popular of each region:
 
-
-
-
-
+Midwest - American Pale Wheat Ale, 
+Northeast - American Double / Imperial IPA, 
+Southeast - American Blonde Ale, 
+SouthWest - American Amber / Red Ale, 
+West - American Amber /Red Ale 
