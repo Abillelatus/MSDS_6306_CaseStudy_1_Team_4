@@ -8,6 +8,7 @@ authors: "Ryan Herrin, Celia Banks, Akib Hossain"
 knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
 library(tidyverse)
+library(tidymodels)
 library(GGally)
 library(plotly)
 library(ggplot2)
@@ -25,6 +26,9 @@ library(mvtnorm)
 library(xlsx)
 library(leaflet)
 library(ggvis)
+library(pracma)
+library(kknn) # used by the nearest_neighbor engine
+
 ```
 
 ## Setup
@@ -336,24 +340,84 @@ for (iter in 1:k_iterations) {
 plot_ly(style_accuracy, x=style_accuracy$k, y=style_accuracy$accuracy, 
         type="scatter", mode="lines")
 
-##
-## On average this loop gives me an optimal k level of k=5,6,7
-## Use 6 as the choice k
+# On average this loop gives me an optimal k level of k=5,6,7
+# Use 6 as the choice k
 optimal_k <- 6
 
-# Create knn classification for Ale and IPA
-ale_ipa_classification <- knn(ipas_and_ales_train[,c(3,4)], 
-                              ipas_and_ales_test[,c(3,4)],
-                              ipas_and_ales_train$Style,
-                              prob=TRUE, 
-                              k=optimal_k) # K determined by above comment
+################################################################################
+# START Multi-Class prediction confidence with Heatmap
+# Use existing Training and Test Data Frames 
 
-# Create confusion matrix based on ale_ipa_classification
-ale_ipa_cm <- confusionMatrix(table(ipas_and_ales_test$Style, 
-                                    ale_ipa_classification))
+# assing IBU column as numeric to keep it the same as ABV
+ipas_and_ales_train$IBU <- as.numeric(ipas_and_ales_train$IBU)
+ipas_and_ales_test$IBU <- as.numeric(ipas_and_ales_test$IBU)
+# classification models require the outcome to be of type factor()
+ipas_and_ales_train$Style <- as.factor(ipas_and_ales_train$Style)
+ipas_and_ales_test$Style <- as.factor(ipas_and_ales_test$Style)
 
+# grid config
+grid_mesh_size <- .02
+grid_margin <- 1
+
+# Create a mesh grid to run the model
+grid_l_min <- min(ipas_and_ales$IBU) - grid_margin
+grid_l_max <- max(ipas_and_ales$IBU) + grid_margin
+grid_w_min <- min(ipas_and_ales$ABV) - grid_margin
+grid_w_max <- max(ipas_and_ales$ABV) + grid_margin
+grid_l_range <- seq(grid_l_min, grid_l_max, grid_mesh_size)
+grid_w_range <- seq(grid_w_min, grid_w_max, grid_mesh_size)
+beer_grid <- meshgrid(grid_l_range, grid_w_range)
+grid_ll <- beer_grid$X
+grid_ww <- beer_grid$Y
+
+# Create (another) classifier and run on the grid
+# Reuse the optimal k-value from ealier for the neighbors argument
+beer_model <- nearest_neighbor(neighbors=optimal_k, weight_func="inv") %>%
+  set_engine("kknn") %>%
+  set_mode("classification") %>% 
+  fit(formula=Style ~ ABV + IBU, data=ipas_and_ales_train)
+
+grid_ll_1 <- matrix(grid_ll, length(grid_ll), 1)
+grid_ww_1 <- matrix(grid_ww, length(grid_ww), 1)
+grid_final <- data.frame(grid_ll_1, grid_ww_1)
+
+colnames(grid_final) <- c("IBU", "ABV")
+
+grid_pred <- beer_model %>% predict(grid_final, type='prob')
+
+dim_value <- dim(grid_ll)
+
+prob_ipa <- matrix(grid_pred$.pred_IPA, dim_value[1], dim_value[2])
+prob_ale <- matrix(grid_pred$.pred_Ale, dim_value[1], dim_value[2])
+
+# Get the classifier Confidence 
+ale_ipa_z <- array(c(prob_ipa, prob_ale), dim=c(dim_value[1], dim_value[2],3))
+diff <- aaply(ale_ipa_z, c(1,2), max) - (aaply(ale_ipa_z, c(1,2), sum) - 
+                                           aaply(ale_ipa_z, c(1,2), max))
+
+# Overlay the heatmap of the confidence on the scatter plot of the example 
+ale_ipa_fig <- plot_ly()
+ale_ipa_fig <- ale_ipa_fig %>% 
+               add_trace(data=ipas_and_ales_test, 
+                         y= ~ABV, 
+                         x= ~IBU, 
+                         symbol= ~Style, 
+                         split= ~Style,
+                         symbols= c('square-dot', 'circle-dot'),
+                         type= 'scatter',
+                         mode= 'markers',
+                         marker= list(size=12, 
+                                      line=list(width=1.5), 
+                                      color='lightyellow')) %>%
+               layout(title="Prediction Confidence on Test Split")
+ale_ipa_fig <- ale_ipa_fig %>% add_trace(x=grid_l_range, y=grid_w_range, z=diff, type='heatmap')
+ale_ipa_fig
 ```
-
+Using KNN and plotly to generate the above graph you can see the relationship 
+of Ales to IPAs. If you zoom into the chart you will be able to see that below 
+60 IBU the beer is predicted to be an Ale, but as IBU approached 60 and upward 
+the beer is likely to be classified as an IPA. With ABV having a positive 
+correlation with IBU the ABV is less of a factor in determining the beer Style. 
 
 
 
